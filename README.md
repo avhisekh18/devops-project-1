@@ -153,4 +153,4 @@ All changes go through Pull Requests — no direct pushes to main.
 ---
 
 *Part of my DevOps Portfolio — building 5 progressively advanced projects.*  
-*Connect with me on [LinkedIn](https://www.linkedin.com/in/avhisekh-dhungana-1b6727258)*
+*Connect with me on [LinkedIn](https://www.linkedin.com/in/avhisekh-dhungana-1b6727258/)*
