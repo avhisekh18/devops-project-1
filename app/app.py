@@ -33,3 +33,9 @@ def play():
     return jsonify({
         "football":"Score"
     })
+
+
+def dance():
+    return jsonify({
+        "song":"point"
+    })
