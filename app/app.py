@@ -35,3 +35,8 @@ def play():
     })
 
 
+def dance():
+    return jsonify({
+        "song":"point",
+        "activity":"healthy"
+    })
