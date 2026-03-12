@@ -2,8 +2,8 @@ pipeline {
     agent any
 
     environment {
-        APP_NAME    = 'cicd-demo-app'
-        IMAGE_TAG   = "${BUILD_NUMBER}"
+        APP_NAME  = 'cicd-demo-app'
+        IMAGE_TAG = "${BUILD_NUMBER}"
     }
 
     stages {
@@ -25,19 +25,28 @@ pipeline {
             steps {
                 echo '🧪 Running tests...'
                 sh '''
+                    # Clean any old venv
+                    rm -rf venv
+
+                    # Create fresh venv
                     python3 -m venv venv
-                    venv/bin/pip install --upgrade pip
-                    venv/bin/pip install -r app/requirements.txt
-                    cd app &&  ../venv/bin/pytest test_app.py -v
+
+                    # Fix permissions for Jenkins
+                    chmod -R 755 venv
+
+                    # Upgrade pip
+                    venv/bin/pip install --upgrade pip --quiet
+
+                    # Install dependencies
+                    venv/bin/pip install -r app/requirements.txt --quiet
+
+                    # Run tests
+                    cd app && ../venv/bin/pytest test_app.py -v
                 '''
             }
             post {
-                success {
-                    echo '✅ All tests passed!'
-                }
-                failure {
-                    echo '❌ Tests failed — stopping pipeline'
-                }
+                success { echo '✅ All tests passed!' }
+                failure { echo '❌ Tests failed — stopping pipeline' }
             }
         }
 
@@ -53,20 +62,19 @@ pipeline {
                 '''
             }
             post {
-                success {
-                    echo "✅ Docker image built: ${APP_NAME}:${IMAGE_TAG}"
-                }
+                success { echo "✅ Docker image built: ${APP_NAME}:${IMAGE_TAG}" }
+                failure { echo '❌ Docker build failed' }
             }
         }
 
         // ─────────────────────────────────────────
-        // STAGE 4: Deploy locally (run container)
+        // STAGE 4: Deploy (run container locally)
         // ─────────────────────────────────────────
         stage('Deploy') {
             steps {
                 echo '🚀 Deploying container...'
                 sh '''
-                    # Stop existing container if running
+                    # Stop and remove existing container if running
                     docker stop ${APP_NAME} || true
                     docker rm   ${APP_NAME} || true
 
@@ -87,9 +95,7 @@ pipeline {
                 '''
             }
             post {
-                success {
-                    echo '✅ Deployment successful! App running at http://localhost:5000'
-                }
+                success { echo '✅ App is live at http://localhost:5000' }
                 failure {
                     echo '❌ Deployment failed — rolling back'
                     sh 'docker stop ${APP_NAME} || true'
@@ -99,20 +105,19 @@ pipeline {
     }
 
     // ─────────────────────────────────────────
-    // AFTER PIPELINE: notify result
+    // AFTER ALL STAGES
     // ─────────────────────────────────────────
     post {
         success {
-            echo '''
-            ✅ Pipeline completed successfully!
-            App is live at http://localhost:5000
-            '''
+            echo '✅ Pipeline completed! App live at http://localhost:5000'
         }
         failure {
-            echo '❌ Pipeline failed — check the logs above'
+            echo '❌ Pipeline failed — check logs above'
         }
         always {
-            echo "Pipeline finished — Build #${BUILD_NUMBER}"
+            // Clean up venv after every build
+            sh 'rm -rf venv'
+            echo "Build #${BUILD_NUMBER} finished"
         }
     }
 }
