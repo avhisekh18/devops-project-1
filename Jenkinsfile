@@ -26,9 +26,9 @@ pipeline {
                 echo '🧪 Running tests...'
                 sh '''
                     python3 -m venv venv
-                    . venv/bin/activate
-                    pip install -r app/requirements.txt
-                    cd app && pytest test_app.py -v
+                    venv/bin/pip install --upgrade pip
+                    venv/bin/pip install -r app/requirements.txt
+                    cd app &&  ../venv/bin/pytest test_app.py -v
                 '''
             }
             post {
